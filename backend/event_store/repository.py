@@ -46,4 +46,18 @@ class EventStoreRepository:
         if not response.data:
             return None
         return Event.model_validate(response.data[0])
+    async def add_user_favorite(self, user_id: str, movie_id: int) -> None:
+        await asyncio.to_thread(
+            lambda: self._client.table("user_favorites")
+            .upsert({"user_id": user_id, "movie_id": movie_id})
+            .execute()
+        )
 
+    async def remove_user_favorite(self, user_id: str, movie_id: int) -> None:
+        await asyncio.to_thread(
+            lambda: self._client.table("user_favorites")
+            .delete()
+            .eq("user_id", user_id)
+            .eq("movie_id", movie_id)
+            .execute()
+        )

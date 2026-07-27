@@ -6,3 +6,5 @@ supabase
 python-jose[cryptography]
 passlib[bcrypt]
 email-validator
+openai>=1.0.0
+tiktoken

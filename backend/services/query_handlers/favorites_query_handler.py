@@ -1,3 +1,4 @@
+import asyncio
 from backend.event_store.repository import EventStoreRepository
 
 
@@ -6,17 +7,12 @@ class FavoritesQueryHandler:
         self._event_store = event_store or EventStoreRepository()
 
     async def get_favorites(self, user_id: str) -> list[dict]:
-        events = await self._event_store.get_events_for_aggregate(user_id)
-        favorites: dict[int, dict] = {}
 
-        for event in events:
-            movie_id = event.payload.get("movie_id")
-            if movie_id is None:
-                continue
-
-            if event.event_type == "MovieFavorited":
-                favorites[movie_id] = event.payload
-            elif event.event_type == "MovieUnfavorited":
-                favorites.pop(movie_id, None)
-
-        return list(favorites.values())
+        response = await asyncio.to_thread(
+            lambda: self._event_store._client.table("user_favorites")
+            .select("movie_id, created_at")
+            .eq("user_id", user_id)
+            .execute()
+        )
+        
+        return [{"movie_id": row["movie_id"], "created_at": row["created_at"]} for row in response.data]
