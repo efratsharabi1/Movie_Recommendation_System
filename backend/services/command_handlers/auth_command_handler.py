@@ -21,6 +21,7 @@ class AuthCommandHandler:
             raise ValueError("Email already registered")
 
         user_id = str(uuid4())
+        print(f"--- DEBUG: Password received is: '{password}' | Length: {len(password)} ---")
         password_hash = pwd_context.hash(password)
 
         event = UserRegistered(

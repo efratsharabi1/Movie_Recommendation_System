@@ -24,7 +24,8 @@ async def register(request: RegisterRequest) -> dict:
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
-        raise HTTPException(status_code=500, detail="Registration failed") from exc
+        print(f"Detailed Register Error: {str(exc)}")
+        raise HTTPException(status_code=500, detail=f"Registration failed: {str(exc)}") from exc
 
 
 @router.post("/login")
@@ -34,4 +35,5 @@ async def login(request: LoginRequest) -> dict:
     except ValueError as exc:
         raise HTTPException(status_code=401, detail=str(exc)) from exc
     except Exception as exc:
-        raise HTTPException(status_code=500, detail="Login failed") from exc
+        print(f"Detailed Login Error: {str(exc)}")
+        raise HTTPException(status_code=500, detail=f"Login failed: {str(exc)}") from exc

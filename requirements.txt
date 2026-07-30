@@ -8,3 +8,4 @@ passlib[bcrypt]
 email-validator
 openai>=1.0.0
 tiktoken
+bcrypt==3.2.2

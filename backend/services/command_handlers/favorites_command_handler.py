@@ -36,4 +36,9 @@ class FavoritesCommandHandler:
                 "poster_path": movie.get("poster_path"),
             },
         )
-        return await self._event_store.append_event(event)
+        
+        saved_event = await self._event_store.append_event(event)
+        
+        await self._event_store.add_user_favorite(user_id, movie_id)
+        
+        return saved_event
