@@ -73,3 +73,18 @@ class RAGRecommendationService:
             "user_id": user_id,
             "recommended_movies": detailed_recommendations
         }
+    async def get_user_movie_context(self, user_id: str) -> str:
+   
+        response = await asyncio.to_thread(
+            lambda: self._event_store._client.table("user_favorites")
+            .select("movie_id")
+            .eq("user_id", user_id)
+            .execute()
+        )
+        
+        favorites = response.data
+        if not favorites:
+            return "The user currently has no favorite movies in the database."
+
+        movie_ids = [fav["movie_id"] for fav in favorites]
+        return f"The user has saved the following movie IDs as their favorites: {movie_ids}."

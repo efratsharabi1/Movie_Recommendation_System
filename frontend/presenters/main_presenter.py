@@ -8,7 +8,7 @@ from typing import Any
 import httpx
 from PySide6.QtCore import QObject, QThread, Signal
 
-from frontend.models.api_client import ApiClient, AuthSession, MovieSummary
+from models.api_client import ApiClient, AuthSession, MovieSummary
 
 
 def _format_error(exc: Exception) -> str:
@@ -172,35 +172,24 @@ class MainPresenter(QObject):
         )
 
     def search_movies(self, query: str) -> None:
-        query = query.strip().lower()
+        query = query.strip()
+        if not query:
+            self.load_trending_movies()
+            return
 
         if query.isdigit():
             self.load_movie_detail(int(query))
             return
 
-        if not self._cached_movies:
-            def _task() -> list[MovieSummary]:
-                movies = self._api.get_trending_movies(limit=20)
-                self._cached_movies = movies
-                return movies
+        # Asynchronous task that calls the server we set up (/api/movies/search)
+        def _task() -> list[MovieSummary]:
+            return self._api.search_movies(query)
 
-            def _filter(_movies: list[MovieSummary]) -> None:
-                filtered = (
-                    [m for m in self._cached_movies if query in m.title.lower()]
-                    if query
-                    else self._cached_movies
-                )
-                self.movies_loaded.emit(filtered)
-
-            self._run_async(_task, _filter)
-            return
-
-        filtered = (
-            [m for m in self._cached_movies if query in m.title.lower()]
-            if query
-            else self._cached_movies
+        self._run_async(
+            _task,
+            self.movies_loaded.emit,
+            on_error=lambda msg: self.status_message.emit(f"Search failed: {msg}"),
         )
-        self.movies_loaded.emit(filtered)
 
     def load_movie_detail(self, movie_id: int) -> None:
         def _task() -> MovieSummary:
@@ -264,7 +253,6 @@ class MainPresenter(QObject):
         )
 
     # --- AI Advisor ---
-
     def send_chat_message(self, message: str) -> None:
         message = message.strip()
         if not message:
@@ -275,11 +263,13 @@ class MainPresenter(QObject):
             self._fetch_recommendations()
             return
 
-        reply = (
-            "I'm your movie advisor. Ask me to \"recommend movies\" and I'll "
-            "suggest titles based on your favorites."
-        )
-        self.chat_reply_received.emit(reply, None)
+        def _task() -> str:
+            return self._api.ask_ai_advisor(message)
+
+        def _on_result(reply: str) -> None:
+            self.chat_reply_received.emit(reply, None)
+
+        self._run_async(_task, _on_result)
 
     def _fetch_recommendations(self) -> None:
         def _task() -> dict:

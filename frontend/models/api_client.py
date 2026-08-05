@@ -193,7 +193,10 @@ class ApiClient:
 
         try:
             response = self._request("GET", "/api/movies/search", params={"query": query_str})
-            movies = response.json()
+            data = response.json()
+            
+            movies = data.get("results", []) if isinstance(data, dict) else data
+            
             return [MovieSummary.from_api(item) for item in movies]
         except httpx.HTTPError:
             all_mock = self._mock_trending_movies(20)

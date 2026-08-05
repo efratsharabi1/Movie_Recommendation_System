@@ -274,9 +274,7 @@ Movie_Recommendation_System/
 ├── data/
 │   └── movies.csv                  # RAG corpus
 │
-└── tests/
-    ├── backend/
-    └── frontend/
+
 ```
 
 ---

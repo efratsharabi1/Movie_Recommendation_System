@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     tmdb_api_key: str
     supabase_url: str
     supabase_key: str
+    openai_api_key: str
     jwt_secret: str = "dev-secret-change-in-production"
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 30

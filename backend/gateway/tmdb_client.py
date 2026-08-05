@@ -24,3 +24,12 @@ class TMDBClient:
 
     def get_movie_details(self, movie_id: int) -> dict:
         return self._get(f"/movie/{movie_id}")
+    def search_movies(self, query: str) -> list[dict]:
+            params = {
+                "query": query,
+                "language": "en-US",
+                "page": 1,
+                "include_adult": "false"
+            }
+            data = self._get("/search/movie", params=params)
+            return data.get("results", [])

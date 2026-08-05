@@ -3,10 +3,10 @@
 import sys
 
 from PySide6.QtWidgets import QApplication
+from models.api_client import ApiClient
 
-from frontend.models.api_client import ApiClient
-from frontend.presenters.main_presenter import MainPresenter
-from frontend.views.main_window import MainWindow
+from presenters.main_presenter import MainPresenter
+from views.main_window import MainWindow
 
 
 def main() -> int:

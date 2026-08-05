@@ -34,8 +34,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from frontend.models.api_client import MovieSummary
-from frontend.presenters.main_presenter import MainPresenter
+from models.api_client import MovieSummary
+from presenters.main_presenter import MainPresenter
 
 
 class MainWindow(QMainWindow):
