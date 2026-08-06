@@ -18,4 +18,4 @@ class OllamaGateway:
                 res.raise_for_status()
                 return res.json().get("response", "")
         except Exception as exc:
-            raise HTTPException(status_code=500, detail=f"Ollama connection failed: {str(exc)}")
+           raise ConnectionError(f"Ollama connection failed: {str(exc)}")

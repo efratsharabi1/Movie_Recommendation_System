@@ -1,19 +1,22 @@
 import asyncio
-import httpx
-from backend.config import settings
 from backend.event_store.repository import EventStoreRepository
-
+from backend.gateway.tmdb_client import TMDBClient
+from backend.gateway.ollama_gateway import OllamaGateway
 
 class RAGRecommendationService:
-    def __init__(self, event_store: EventStoreRepository | None = None) -> None:
+    # צעד 1: הזרקת ה-Gateways במקום הגדרת משתני רשת
+    def __init__(
+        self, 
+        event_store: EventStoreRepository | None = None,
+        tmdb_client: TMDBClient | None = None,
+        ollama_gateway: OllamaGateway | None = None
+    ) -> None:
         self._event_store = event_store or EventStoreRepository()
-        self._tmdb_api_key = settings.tmdb_api_key
-        self._tmdb_base_url = "https://api.themoviedb.org/3"
-        # address of the Ollama server (in the docker or local)
-        self._ollama_url = "http://ollama:11434/api/generate"
+        self._tmdb_client = tmdb_client or TMDBClient()
+        self._ollama_gateway = ollama_gateway or OllamaGateway()
 
     async def get_personalized_recommendations(self, user_id: str) -> dict:
-        # 1. get the user's favorites from the read model
+        # 1. שליפת המועדפים של המשתמש מהמסד
         response = await asyncio.to_thread(
             lambda: self._event_store._client.table("user_favorites")
             .select("movie_id")
@@ -27,54 +30,58 @@ class RAGRecommendationService:
 
         movie_ids = [fav["movie_id"] for fav in favorites]
 
-        # 2. build the prompt for the Ollama
+    
+        catalog_movies = await self._tmdb_client.get_trending_movies(limit=5)
+
+        if not catalog_movies:
+            return {"message": "Could not fetch movie catalog for recommendations."}
+
+        catalog_context = ""
+        catalog_dict = {}
+        for movie in catalog_movies:
+            title = movie.get("title")
+            catalog_context += f"- {title}\n"
+            catalog_dict[title.strip().lower()] = movie
+
+        # 3. Augmentation -
         prompt = (
-            f"the user marked the following movie ids as favorites: {movie_ids}. "
-            "recommend 3 new movies that are suitable for him. "
-            "return the response only with the exact movie titles in english, separated by commas, without any extra text."
+            f"The user's favorite movie IDs are: {movie_ids}.\n"
+            f"Here is a short movie catalog to choose from:\n{catalog_context}\n"
+            "Choose exactly 2 movie titles from the catalog above that would fit the user best. "
+            "Return ONLY the exact movie titles separated by commas, with no extra text or explanations."
         )
 
-        # 3. call to the local Ollama server
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            payload = {
-                "model": "llama3",
-                "prompt": prompt,
-                "stream": False
-            }
-            res = await client.post(self._ollama_url, json=payload)
-            if res.status_code != 200:
-                raise Exception(f"Failed to communicate with Ollama: {res.text}")
-            
-            ai_response = res.json().get("response", "")
+        # 4. 
+        ai_response = await self._ollama_gateway.generate_response(prompt)
 
-        movie_titles = [title.strip() for title in ai_response.split(",")]
+   
+        ai_titles = [t.strip() for t in ai_response.split(",") if t.strip()]
 
-        # 4. call to TMDB to get the real details (image, summary, etc.) for each movie the AI recommended by TMDB
+        # 5. TMDB
         detailed_recommendations = []
-        async with httpx.AsyncClient() as client:
-            for title in movie_titles:
-                if not title:
-                    continue
-                url = f"{self._tmdb_base_url}/search/movie"
-                params = {"api_key": self._tmdb_api_key, "query": title}
-                res = await client.get(url, params=params)
-                if res.status_code == 200:
-                    results = res.json().get("results", [])
-                    if results:
-                        movie_data = results[0]
-                        detailed_recommendations.append({
-                            "id": movie_data.get("id"),
-                            "title": movie_data.get("title"),
-                            "overview": movie_data.get("overview"),
-                            "poster_path": f"https://image.tmdb.org/t/p/w500{movie_data.get('poster_path')}" if movie_data.get('poster_path') else None
-                        })
+        for title in ai_titles:
+            clean_title = title.lower()
+            matched_movie = None
+            
+            for cat_title, movie_obj in catalog_dict.items():
+                if clean_title in cat_title or cat_title in clean_title:
+                    matched_movie = movie_obj
+                    break
+
+            if matched_movie:
+                detailed_recommendations.append({
+                    "id": matched_movie.get("id"),
+                    "title": matched_movie.get("title"),
+                    "overview": matched_movie.get("overview"),
+                    "poster_path": f"https://image.tmdb.org/t/p/w500{matched_movie.get('poster_path')}" if matched_movie.get('poster_path') else None
+                })
 
         return {
             "user_id": user_id,
             "recommended_movies": detailed_recommendations
         }
     async def get_user_movie_context(self, user_id: str) -> str:
-   
+      
         response = await asyncio.to_thread(
             lambda: self._event_store._client.table("user_favorites")
             .select("movie_id")
@@ -84,7 +91,23 @@ class RAGRecommendationService:
         
         favorites = response.data
         if not favorites:
-            return "The user currently has no favorite movies in the database."
+            return "The user has no favorite movies yet."
 
-        movie_ids = [fav["movie_id"] for fav in favorites]
-        return f"The user has saved the following movie IDs as their favorites: {movie_ids}."
+   
+        movie_titles = []
+        for fav in favorites:
+            movie_id = fav["movie_id"]
+            try:
+            
+                movie_details = await self._tmdb_client.get_movie_details(movie_id)
+                title = movie_details.get("title")
+                if title:
+                    movie_titles.append(title)
+            except Exception as e:
+         
+                print(f"Warning: Could not fetch details for movie_id {movie_id} - {str(e)}")
+
+        if not movie_titles:
+            return "The user has no favorite movies yet."
+            
+        return ", ".join(movie_titles)
