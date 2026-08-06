@@ -1,5 +1,3 @@
-import asyncio
-
 import httpx
 
 from backend.event_store.repository import EventStoreRepository
@@ -18,9 +16,8 @@ class FavoritesCommandHandler:
 
     async def add_favorite(self, user_id: str, movie_id: int) -> MovieFavorited:
         try:
-            movie = await asyncio.to_thread(
-                self._tmdb_client.get_movie_details, movie_id
-            )
+            # קריאה אסינכרונית ישירה לקבלת פרטי הסרט
+            movie = await self._tmdb_client.get_movie_details(movie_id)
         except httpx.HTTPStatusError as exc:
             if exc.response.status_code == 404:
                 raise ValueError("Movie not found") from exc
@@ -36,9 +33,12 @@ class FavoritesCommandHandler:
                 "poster_path": movie.get("poster_path"),
             },
         )
-        
+
         saved_event = await self._event_store.append_event(event)
-        
         await self._event_store.add_user_favorite(user_id, movie_id)
-        
+
         return saved_event
+
+    async def remove_favorite(self, user_id: str, movie_id: int) -> dict:
+        await self._event_store.remove_user_favorite(user_id, movie_id)
+        return {"status": "success", "movie_id": movie_id}

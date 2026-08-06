@@ -47,7 +47,7 @@ class MainWindow(QMainWindow):
         self._selected_movie_id: int | None = None
 
         self.setWindowTitle("Movie Recommendation System")
-        self.setMinimumSize(960, 640)
+        self.setMinimumSize(980, 680)
 
         self._build_ui()
         self._wire_presenter()
@@ -78,9 +78,10 @@ class MainWindow(QMainWindow):
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         box = QGroupBox("Sign In / Register")
-        box.setFixedWidth(380)
+        box.setFixedWidth(400)
         box_layout = QVBoxLayout(box)
-        box_layout.setSpacing(12)
+        box_layout.setSpacing(14)
+        box_layout.setContentsMargins(20, 24, 20, 24)
 
         self._email_input = QLineEdit()
         self._email_input.setPlaceholderText("Email (e.g. user@example.com)")
@@ -90,8 +91,12 @@ class MainWindow(QMainWindow):
         self._password_input.setEchoMode(QLineEdit.EchoMode.Password)
 
         btn_layout = QHBoxLayout()
+        btn_layout.setSpacing(10)
+
         self._login_btn = QPushButton("Log In")
         self._register_btn = QPushButton("Register")
+        self._register_btn.setStyleSheet("background-color: #272736; color: #E2E2E8;")
+
         btn_layout.addWidget(self._login_btn)
         btn_layout.addWidget(self._register_btn)
 
@@ -99,6 +104,7 @@ class MainWindow(QMainWindow):
         box_layout.addWidget(self._email_input)
         box_layout.addWidget(QLabel("Password:"))
         box_layout.addWidget(self._password_input)
+        box_layout.addSpacing(6)
         box_layout.addLayout(btn_layout)
 
         layout.addWidget(box)
@@ -107,10 +113,16 @@ class MainWindow(QMainWindow):
     def _build_main_view(self) -> QWidget:
         widget = QWidget()
         root_layout = QVBoxLayout(widget)
+        root_layout.setContentsMargins(16, 16, 16, 16)
+        root_layout.setSpacing(12)
 
         header = QHBoxLayout()
         self._user_label = QLabel("Not signed in")
+        self._user_label.setStyleSheet("font-weight: 600; color: #A594F9;")
+
         self._logout_btn = QPushButton("Log Out")
+        self._logout_btn.setStyleSheet("background-color: #2A2A38; color: #FF6B6B;")
+
         header.addWidget(self._user_label)
         header.addStretch()
         header.addWidget(self._logout_btn)
@@ -128,13 +140,20 @@ class MainWindow(QMainWindow):
     def _build_browse_tab(self) -> QWidget:
         tab = QWidget()
         layout = QVBoxLayout(tab)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(12)
 
         search_row = QHBoxLayout()
+        search_row.setSpacing(8)
+
         self._search_input = QLineEdit()
         self._search_input.setPlaceholderText("Search by title or enter a movie ID…")
+
         self._search_btn = QPushButton("Search")
         self._refresh_movies_btn = QPushButton("Load Trending")
-        search_row.addWidget(self._search_input)
+        self._refresh_movies_btn.setStyleSheet("background-color: #272736; color: #E2E2E8;")
+
+        search_row.addWidget(self._search_input, stretch=3)
         search_row.addWidget(self._search_btn)
         search_row.addWidget(self._refresh_movies_btn)
         layout.addLayout(search_row)
@@ -142,37 +161,45 @@ class MainWindow(QMainWindow):
         splitter = QSplitter(Qt.Orientation.Horizontal)
 
         self._movie_list = QListWidget()
-        self._movie_list.setMinimumWidth(280)
+        self._movie_list.setMinimumWidth(300)
         splitter.addWidget(self._movie_list)
 
         detail_panel = QFrame()
-        detail_panel.setFrameShape(QFrame.Shape.StyledPanel)
         detail_layout = QVBoxLayout(detail_panel)
+        detail_layout.setContentsMargins(16, 16, 16, 16)
+        detail_layout.setSpacing(12)
 
         self._detail_title = QLabel("Select a movie")
         title_font = QFont()
-        title_font.setPointSize(14)
+        title_font.setPointSize(16)
         title_font.setBold(True)
         self._detail_title.setFont(title_font)
         self._detail_title.setWordWrap(True)
 
         self._detail_meta = QLabel("")
+        self._detail_meta.setStyleSheet("color: #9A9AB0; font-weight: 500;")
+
         self._detail_overview = QTextEdit()
         self._detail_overview.setReadOnly(True)
+        self._detail_overview.setStyleSheet(
+            "background-color: transparent; border: none; color: #D1D1DF; font-size: 13px;"
+        )
 
         # רכיב התמונה (Poster Label)
         self._detail_poster = QLabel("No Image")
         self._detail_poster.setFixedSize(160, 240)
         self._detail_poster.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._detail_poster.setStyleSheet(
-            "border: 1px solid #ccc; background-color: #f8f9fa; border-radius: 4px;"
+            "border: 1px solid #2A2A3C; background-color: #121217; border-radius: 8px; color: #666677;"
         )
 
         # סידור התמונה לצד הפרטים הטקסטואליים
         info_layout = QHBoxLayout()
+        info_layout.setSpacing(16)
         info_layout.addWidget(self._detail_poster)
 
         text_details_layout = QVBoxLayout()
+        text_details_layout.setSpacing(8)
         text_details_layout.addWidget(self._detail_title)
         text_details_layout.addWidget(self._detail_meta)
         text_details_layout.addWidget(self._detail_overview)
@@ -186,6 +213,7 @@ class MainWindow(QMainWindow):
         # אזור הזנת דירוג
         rating_box = QGroupBox("User Input: Rate Movie")
         rating_layout = QHBoxLayout(rating_box)
+        rating_layout.setSpacing(12)
 
         self._rating_label = QLabel("Rating (1-10):")
         self._rating_spinbox = QSpinBox()
@@ -195,9 +223,11 @@ class MainWindow(QMainWindow):
 
         self._rate_movie_btn = QPushButton("Rate Movie")
         self._rate_movie_btn.setEnabled(False)
+        self._rate_movie_btn.setStyleSheet("background-color: #272736; color: #E2E2E8;")
 
         rating_layout.addWidget(self._rating_label)
         rating_layout.addWidget(self._rating_spinbox)
+        rating_layout.addStretch()
         rating_layout.addWidget(self._rate_movie_btn)
 
         detail_layout.addWidget(self._add_favorite_btn)
@@ -210,13 +240,25 @@ class MainWindow(QMainWindow):
 
         return tab
 
+
     def _build_favorites_tab(self) -> QWidget:
         tab = QWidget()
         layout = QVBoxLayout(tab)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(12)
 
         toolbar = QHBoxLayout()
+        toolbar.setSpacing(8)
+
         self._refresh_favorites_btn = QPushButton("Refresh Favorites")
+        
+        # כפתור הסרה חדש
+        self._remove_favorite_btn = QPushButton("Remove Selected")
+        self._remove_favorite_btn.setEnabled(False)
+        self._remove_favorite_btn.setStyleSheet("background-color: #2A2A38; color: #FF6B6B;")
+
         toolbar.addWidget(self._refresh_favorites_btn)
+        toolbar.addWidget(self._remove_favorite_btn)
         toolbar.addStretch()
         layout.addLayout(toolbar)
 
@@ -227,6 +269,8 @@ class MainWindow(QMainWindow):
     def _build_charts_tab(self) -> QWidget:
         tab = QWidget()
         layout = QVBoxLayout(tab)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(12)
 
         toolbar = QHBoxLayout()
         self._refresh_chart_btn = QPushButton("Refresh Chart")
@@ -244,25 +288,33 @@ class MainWindow(QMainWindow):
     def _build_advisor_tab(self) -> QWidget:
         tab = QWidget()
         layout = QVBoxLayout(tab)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(10)
 
         self._chat_history = QTextEdit()
         self._chat_history.setReadOnly(True)
         self._chat_history.setPlaceholderText("Chat with the AI movie advisor…")
+        self._chat_history.setStyleSheet(
+            "background-color: #121218; border: 1px solid #22222E; border-radius: 12px; padding: 12px;"
+        )
         layout.addWidget(self._chat_history)
 
         input_row = QHBoxLayout()
+        input_row.setSpacing(8)
+
         self._chat_input = QLineEdit()
         self._chat_input.setPlaceholderText('Ask anything or try "recommend movies"…')
+
         self._chat_send_btn = QPushButton("Send")
-        input_row.addWidget(self._chat_input)
+        input_row.addWidget(self._chat_input, stretch=4)
         input_row.addWidget(self._chat_send_btn)
         layout.addLayout(input_row)
 
         hint = QLabel(
-            "Tip: ask for recommendations to get personalized suggestions based on your favorites."
+            "💡 Tip: Ask for recommendations to get personalized suggestions based on your favorites."
         )
         hint.setWordWrap(True)
-        hint.setStyleSheet("color: gray;")
+        hint.setStyleSheet("color: #717188; font-size: 11px;")
         layout.addWidget(hint)
 
         return tab
@@ -298,7 +350,11 @@ class MainWindow(QMainWindow):
         self._add_favorite_btn.clicked.connect(self._handle_add_favorite)
         self._rate_movie_btn.clicked.connect(self._handle_rate_movie)
 
+        # Favorites events — שתי השורות החדשות שנוספו:
         self._refresh_favorites_btn.clicked.connect(self._presenter.load_favorites)
+        self._remove_favorite_btn.clicked.connect(self._handle_remove_favorite)
+        self._favorites_list.currentItemChanged.connect(self._on_favorite_item_changed)
+
         self._refresh_chart_btn.clicked.connect(self._presenter.load_chart_data)
 
         self._chat_send_btn.clicked.connect(self._handle_chat_send)
@@ -324,7 +380,7 @@ class MainWindow(QMainWindow):
         self._movie_list.clear()
         for movie in movies:
             if isinstance(movie, MovieSummary):
-                item = QListWidgetItem(f"{movie.title}  ({movie.vote_average:.1f}★)")
+                item = QListWidgetItem(f"🎬 {movie.title}  ★ {movie.vote_average:.1f}")
                 item.setData(Qt.ItemDataRole.UserRole, movie.id)
                 self._movie_list.addItem(item)
 
@@ -333,7 +389,7 @@ class MainWindow(QMainWindow):
         self._detail_title.setText(movie.title)
         year = movie.release_date[:4] if movie.release_date else "N/A"
         self._detail_meta.setText(
-            f"Rating: {movie.vote_average:.1f}/10  |  Year: {year}  |  ID: {movie.id}"
+            f"⭐ Rating: {movie.vote_average:.1f}/10   |   📅 Year: {year}   |   🆔 ID: {movie.id}"
         )
         self._detail_overview.setPlainText(movie.overview or "No overview available.")
 
@@ -375,7 +431,7 @@ class MainWindow(QMainWindow):
         self._favorites_list.clear()
         for movie in movies:
             if isinstance(movie, MovieSummary):
-                item = QListWidgetItem(movie.title)
+                item = QListWidgetItem(f"❤️ {movie.title}")
                 item.setData(Qt.ItemDataRole.UserRole, movie.id)
                 self._favorites_list.addItem(item)
 
@@ -401,6 +457,7 @@ class MainWindow(QMainWindow):
         series.setBarWidth(0.6)
 
         chart = QChart()
+        chart.setTheme(QChart.ChartTheme.ChartThemeDark)
         chart.addSeries(series)
         chart.setTitle("Top Trending Movies")
         chart.setAnimationOptions(QChart.AnimationOption.SeriesAnimations)
@@ -427,7 +484,7 @@ class MainWindow(QMainWindow):
                 if isinstance(movie, dict) and movie.get("title"):
                     overview = movie.get("overview", "")
                     snippet = f"{overview[:120]}…" if len(overview) > 120 else overview
-                    self._append_chat("source", f"• {movie['title']}: {snippet}")
+                    self._append_chat("source", f"<b>{movie['title']}</b>: {snippet}")
 
     def _on_loading_changed(self, loading: bool) -> None:
         if loading:
@@ -488,8 +545,32 @@ class MainWindow(QMainWindow):
         self._presenter.send_chat_message(message)
 
     def _append_chat(self, role: str, text: str) -> None:
-        prefix = {"user": "You", "assistant": "Advisor", "source": "Source"}.get(role, role)
-        self._chat_history.append(f"<b>{prefix}:</b> {text}")
+        """הצגת הודעות ה-AI בצורת בועות צ'אט מעוצבות."""
+        if role == "user":
+            html = f"""
+            <div style="margin: 8px 0; text-align: right;">
+                <div style="background-color: #6C5CE7; color: #FFFFFF; padding: 10px 14px; border-radius: 16px 16px 2px 16px; display: inline-block; max-width: 80%; text-align: left; font-size: 13px;">
+                    <b>You:</b><br>{text}
+                </div>
+            </div>
+            """
+        elif role == "assistant":
+            html = f"""
+            <div style="margin: 8px 0; text-align: left;">
+                <div style="background-color: #222230; color: #E2E2E8; border: 1px solid #2A2A3C; padding: 10px 14px; border-radius: 16px 16px 16px 2px; display: inline-block; max-width: 80%; font-size: 13px;">
+                    <b style="color: #A594F9;">🤖 Advisor:</b><br>{text}
+                </div>
+            </div>
+            """
+        else:  # source
+            html = f"""
+            <div style="margin: 4px 0 4px 16px; text-align: left;">
+                <div style="background-color: #171722; color: #9A9AB0; border-left: 3px solid #6C5CE7; padding: 6px 10px; border-radius: 4px; font-size: 11px;">
+                    📌 Source: {text}
+                </div>
+            </div>
+            """
+        self._chat_history.append(html)
 
     def _show_error(self, message: str) -> None:
         self._status.showMessage(message)
@@ -497,5 +578,20 @@ class MainWindow(QMainWindow):
 
     def _render_empty_chart(self) -> None:
         chart = QChart()
+        chart.setTheme(QChart.ChartTheme.ChartThemeDark)
         chart.setTitle("Top Trending Movies")
         self._chart_view.setChart(chart)
+
+    def _on_favorite_item_changed(
+        self, current: QListWidgetItem | None, _previous: QListWidgetItem | None
+    ) -> None:
+        """מאפשר ללחוץ על כפתור ההסרה רק כשיש סרט מסומן ברשימה."""
+        self._remove_favorite_btn.setEnabled(current is not None)
+
+    def _handle_remove_favorite(self) -> None:
+        """שולח בקשת הסרה עבור הסרט הנבחר."""
+        current_item = self._favorites_list.currentItem()
+        if current_item is not None:
+            movie_id = current_item.data(Qt.ItemDataRole.UserRole)
+            if movie_id is not None:
+                self._presenter.remove_favorite(int(movie_id))

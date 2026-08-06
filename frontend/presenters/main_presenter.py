@@ -230,6 +230,16 @@ class MainPresenter(QObject):
 
         self._run_async(_task, _on_added)
 
+    def remove_favorite(self, movie_id: int) -> None:
+        def _task() -> dict:
+            return self._api.remove_favorite(movie_id)
+
+        def _on_removed(_result: dict) -> None:
+            self.status_message.emit("Removed from favorites.")
+            self.load_favorites(start_loading=False)
+
+        self._run_async(_task, _on_removed)
+
     def rate_movie(self, movie_id: int, rating: int) -> None:
         def _task() -> dict:
             return self._api.rate_movie(movie_id, rating)

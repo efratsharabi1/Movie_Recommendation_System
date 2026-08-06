@@ -235,6 +235,18 @@ class ApiClient:
         )
         return response.json()
 
+    def remove_favorite(self, movie_id: int) -> dict:
+        if not self._session:
+            raise RuntimeError("Not authenticated")
+        if self._session.is_mock:
+            return {"message": "Mock favorite removed", "movie_id": movie_id}
+        
+        response = self._request(
+            "DELETE",
+            f"/api/favorites/{self._session.user_id}/{movie_id}",
+        )
+        return response.json()
+
     def get_recommendations(self) -> dict:
         if not self._session:
             raise RuntimeError("Not authenticated")

@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-from backend.services.chat_query_handler import ChatQueryHandler
+from backend.services.query_handlers.chat_query_handler import ChatQueryHandler
 
 router = APIRouter(prefix="/api", tags=["AI Chat"])
 

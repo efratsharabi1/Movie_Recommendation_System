@@ -40,3 +40,19 @@ async def add_favorite(request: AddFavoriteRequest) -> dict:
 @router.get("/{user_id}")
 async def get_favorites(user_id: str) -> list[dict]:
     return await query_handler.get_favorites(user_id)
+
+
+@router.delete("/{user_id}/{movie_id}")
+async def remove_favorite(user_id: str, movie_id: int) -> dict:
+    try:
+        event = await command_handler.remove_favorite(user_id, movie_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="Failed to remove favorite") from exc
+
+    return {
+        "message": "Movie removed from favorites",
+        "event_id": str(event.id) if hasattr(event, "id") else None,
+        "movie_id": movie_id,
+    }
