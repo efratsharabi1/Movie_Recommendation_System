@@ -34,3 +34,12 @@ class TMDBClient:
         }
         data = await self._get("/search/movie", params=params)
         return data.get("results", [])
+    
+    async def get_similar_movies(self, movie_id: int, limit: int = 10) -> list[dict]:
+        """Fetch movies similar to a specific movie ID from TMDB."""
+        try:
+            data = await self._get(f"/movie/{movie_id}/similar")
+            return data.get("results", [])[:limit]
+        except Exception as e:
+            print(f"Warning: Failed to fetch similar movies for {movie_id}: {e}")
+            return []

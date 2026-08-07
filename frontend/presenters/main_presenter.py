@@ -286,14 +286,13 @@ class MainPresenter(QObject):
             return self._api.get_recommendations()
 
         def _on_result(data: dict) -> None:
-            recommendations = data.get("recommendations", data)
-            if isinstance(recommendations, dict):
-                if "message" in recommendations:
-                    self.chat_reply_received.emit(recommendations["message"], None)
-                    return
-                movies = recommendations.get("recommended_movies", [])
-            else:
-                movies = recommendations
+            # אם ה-API החזיר הודעת שגיאה (למשל אם אין מועדפים)
+            if "message" in data:
+                self.chat_reply_received.emit(data["message"], None)
+                return
+            
+            # שליפה ישירה ונקייה של הסרטים מהתשובה
+            movies = data.get("recommended_movies", [])
 
             if not movies:
                 self.chat_reply_received.emit(

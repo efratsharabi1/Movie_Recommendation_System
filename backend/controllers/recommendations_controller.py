@@ -15,6 +15,6 @@ async def get_recommendations(
 ):
     try:
         recommendations = await rag_service.get_personalized_recommendations(user_id)
-        return {"user_id": user_id, "recommendations": recommendations}
+        return recommendations
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
